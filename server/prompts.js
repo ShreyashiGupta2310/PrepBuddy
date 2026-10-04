@@ -37,7 +37,7 @@ export function buildUserPrompt({ n, total, audience, seconds, text, prevText, w
       ? " This is the LAST slide: finish with a calm closing line and thank the audience."
       : "";
 
-  return `Slide ${n} of ${total}. Audience: ${audience}. Aim for about ${words} spoken words in the segments.${first}${last} ${question}
+  return `Slide ${n} of ${total}. Audience: ${audience}. Target length: ${words} words across all segments (never write this number in your answer).${first}${last} ${question}
 
 Previous slide text: ${prevText || "(none)"}
 

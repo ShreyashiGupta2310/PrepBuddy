@@ -10,10 +10,12 @@ const clamp = (v, lo, hi, fallback) => {
 
 const clean = (v) => {
   if (v === null || v === undefined) return null;
-  const s = String(v).trim();
+  let s = String(v).split(/[{}]/)[0]; // junk after a stray brace
+  s = s.replace(/\s*\d+\s+(spoken\s+)?words?\s*$/i, ""); // echoed word-count instruction
+  s = s.replace(/["”]+\s*$/, ""); // a quote mark left hanging at the end
+  s = s.trim();
   return ["", "null", "none", "n/a"].includes(s.toLowerCase()) ? null : s;
 };
-
 function parseJson(text) {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
