@@ -110,9 +110,9 @@ Send slide images to Gemma, a more natural local voice, and saving decks.
 
 ## Credits
 
-Gemma (Google), Ollama, pdf.js (Mozilla), React, Vite, Express.
+## Credits
 
-I built this with the help of an AI assistant (Claude by Anthropic), which provided guidance and code that I ran, tested and adapted.
+Gemma (Google), Ollama, pdf.js (Mozilla), React, Vite, Express.
 
 ## Challenge note
 
