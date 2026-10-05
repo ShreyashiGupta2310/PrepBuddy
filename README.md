@@ -108,7 +108,6 @@ I ran out of time to check these properly, so please don't take them as promised
 
 Send slide images to Gemma, a more natural local voice, and saving decks.
 
-## Credits
 
 ## Credits
 
