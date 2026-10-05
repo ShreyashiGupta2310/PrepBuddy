@@ -21,3 +21,16 @@ export function downloadMarkdown(slides, scripts)
   a.click();
   URL.revokeObjectURL(url); // free the memory
 }
+// "Download PDF" = open the browser's print dialog, where she picks "Save as PDF".
+// styles.css hides the form and buttons when printing (@media print), so only the script is left.
+// The page title becomes the default file name, so I rename it for a moment.
+export function printAsPdf() {
+  const oldTitle = document.title;
+  document.title = "SlideCoach-script";
+  const restore = () => {
+    document.title = oldTitle;
+    window.removeEventListener("afterprint", restore);
+  };
+  window.addEventListener("afterprint", restore);
+  window.print();
+}

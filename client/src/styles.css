@@ -56,3 +56,13 @@ h1{font:700 clamp(2rem,5vw,3.2rem)/1.05 var(--head);letter-spacing:-.025em;margi
 .cue.add{border-color:var(--warn)}
 
 @media (max-width:700px){.slide{grid-template-columns:1fr}.fields{grid-template-columns:1fr}}
+
+/* Print = PDF. Hide everything that isn't the script, and keep the highlighter and
+   blue lines (browsers drop background colors when printing unless told otherwise). */
+@media print {
+  body { background: #fff; }
+  .lede, .panel, .toolbar, .meta .btn, .error .btn, .status { display: none !important; }
+  .wrap { max-width: none; padding: 0; }
+  .slide { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

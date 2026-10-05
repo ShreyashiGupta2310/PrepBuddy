@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { readPdf } from "./lib/pdf.js";
 import { requestScript } from "./api.js";
 import { playTimeline, stopSpeaking } from "./lib/voice.js";
-import { downloadMarkdown } from "./lib/exportScript.js";
+import { printAsPdf } from "./lib/exportScript.js";
 import SlideCard from "./components/SlideCard.jsx";
 
 // All the state lives here and the cards just display it. If something looks wrong
@@ -145,9 +145,9 @@ export default function App() {
           <button className="btn ghost" onClick={playing ? stop : playAll}>
             {playing ? "■ Stop" : "▶ Play all"}
           </button>
-          <button className="btn ghost" onClick={() => downloadMarkdown(slides, scripts)}>
-            Download script
-          </button>
+         <button className="btn ghost" onClick={printAsPdf}>
+  Download PDF
+</button>
         </div>
       )}
 
