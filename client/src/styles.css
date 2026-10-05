@@ -66,3 +66,5 @@ h1{font:700 clamp(2rem,5vw,3.2rem)/1.05 var(--head);letter-spacing:-.025em;margi
   .slide { break-inside: avoid; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+.voice-pick{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--dim)}
+.voice-pick select{font:inherit;padding:6px 8px;border:1px solid var(--line);background:#fff;color:var(--ink);max-width:260px}

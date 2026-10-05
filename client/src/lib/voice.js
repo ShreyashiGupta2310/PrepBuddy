@@ -9,6 +9,12 @@ let token = 0; // bump this to cancel whatever is playing. Old loops notice and 
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Voices I tested on this laptop. All are local (work offline). Checked in this order.
+const PREFERRED = ["Heera", "Ravi"];
+
+// Keeps a number inside a range (used for rate, pitch and volume)
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
 // How each tone from Gemma sounds. rate is multiplied by the line's own speed (about 0.95).
 // Tweak these numbers by ear. Small changes are audible.
 const TONE = {
@@ -19,13 +25,28 @@ const TONE = {
   slow:      { rate: 0.8,  pitch: 0.92, volume: 0.9 },
 };
 
-// Prefer voices that live ON this laptop (localService = true). Some voices (Google, Edge "Online")
-// send text to the internet, which would break my "nothing leaves the laptop" claim.
-// Gotcha: getVoices() can be empty on first load, so I call it at play time.
+
+// Which voice to use, in order:
+// 1) the one picked in the dropdown (remembered in localStorage),
+// 2) my PREFERRED list, checked IN THE ORDER I WROTE IT (the old version ignored the order),
+// 3) any local en-IN / en-GB / English voice.
+// Local voices only (localService = true), so nothing is sent to the internet.
+// Gotcha: getVoices() can be empty on first load, so this runs at play time.
+let chosenName = "";
+try { chosenName = localStorage.getItem("voiceName") || ""; } catch {}
+
 function pickVoice() {
   const all = window.speechSynthesis.getVoices();
   const local = all.filter((x) => x.localService);
   const pool = local.length ? local : all;
+
+  const picked = chosenName && pool.find((x) => x.name === chosenName);
+  if (picked) return picked;
+
+  for (const n of PREFERRED) {
+    const v = pool.find((x) => x.name.includes(n));
+    if (v) return v;
+  }
   return (
     pool.find((x) => /en-IN/i.test(x.lang)) ||
     pool.find((x) => /en-GB/i.test(x.lang)) ||
@@ -34,20 +55,69 @@ function pickVoice() {
   );
 }
 
-const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-// Speaks one chunk of text and resolves when it ends. onerror also resolves,
-// otherwise cancel() would leave my loop hanging forever.
+// Chrome quirk: if nothing holds a reference to an utterance, it can be garbage-collected
+// mid-speech and then onend never fires (the loop hangs or the voice stops). So I keep
+// each one in this Set until it finishes.
+const alive = new Set();
+
+// Speaks one chunk of text and resolves when it ends.
+// Quirks handled: speak() right after cancel() can be dropped (so I wait 60ms), and the
+// engine can get stuck "paused" (so I resume() first). Logs are for debugging, delete later.
 function speak(text, { rate, pitch, volume }) {
   return new Promise((resolve) => {
+    const synth = window.speechSynthesis;
     const u = new SpeechSynthesisUtterance(text);
     u.rate = clamp(rate, 0.6, 1.3);
     u.pitch = clamp(pitch, 0.6, 1.5);
     u.volume = clamp(volume, 0.3, 1);
     const voice = pickVoice();
-    if (voice) u.voice = voice;
-    u.onend = u.onerror = () => resolve();
-    window.speechSynthesis.speak(u);
+    if (voice) {
+      u.voice = voice;
+      u.lang = voice.lang;
+    }
+
+    alive.add(u);
+    const done = () => {
+      alive.delete(u);
+      resolve();
+    };
+    u.onstart = () => console.log("[voice] start:", text.slice(0, 30), "| voice:", u.voice?.name, "| rate:", u.rate, "pitch:", u.pitch);
+    u.onend = done;
+    u.onerror = (e) => {
+      if (e.error !== "interrupted" && e.error !== "canceled") console.warn("[voice] error:", e.error);
+      done();
+    };
+
+    synth.resume();
+    setTimeout(() => synth.speak(u), 60);
+  });
+}
+
+
+//  used by the voice dropdown in App.jsx 
+export function getVoiceName() {
+  return chosenName;
+}
+
+export function setVoiceName(name) {
+  chosenName = name; // "" means Automatic
+  try { localStorage.setItem("voiceName", name); } catch {}
+}
+
+// Only on-device English voices, so the list never offers one that needs internet
+export function listVoices() {
+  return window.speechSynthesis
+    .getVoices()
+    .filter((v) => v.localService && /^en/i.test(v.lang))
+    .map((v) => ({ name: v.name, lang: v.lang }));
+}
+
+// Says one short sentence so she can hear the voice right after picking it
+export function previewVoice() {
+  stopSpeaking();
+  return speak("Hello everyone. Today I will walk you through our site visit.", {
+    rate: 0.95, pitch: 1, volume: 1,
   });
 }
 

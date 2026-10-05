@@ -1,7 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { readPdf } from "./lib/pdf.js";
 import { requestScript } from "./api.js";
-import { playTimeline, stopSpeaking } from "./lib/voice.js";
+import {
+  playTimeline,
+  stopSpeaking,
+  listVoices,
+  getVoiceName,
+  setVoiceName,
+  previewVoice,
+} from "./lib/voice.js";
 import { printAsPdf } from "./lib/exportScript.js";
 import SlideCard from "./components/SlideCard.jsx";
 
@@ -13,6 +20,8 @@ export default function App() {
   // and changing it shouldn't re-render the page.
   const cancelRef = useRef(false);
   const [audience, setAudience] = useState("classmates and faculty");
+
+
   const [minutes, setMinutes] = useState(10);
   const [slides, setSlides] = useState([]);   // [{ n, text }] straight from the PDF
   const [scripts, setScripts] = useState({}); // { slideNumber: script } fills in one by one
@@ -21,6 +30,33 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(null); // { n, i } = which slide and which line is being spoken
 
+
+  const [voices, setVoices] = useState([]);
+  const [voiceName, setVoiceNameState] = useState(getVoiceName());
+
+  
+  useEffect(() => {
+    const load = () => setVoices(listVoices());
+    load();
+    window.speechSynthesis.addEventListener("voiceschanged", load);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", load);
+  }, []);
+
+  function chooseVoice(name) {
+    setVoiceName(name);
+    setVoiceNameState(name);
+    previewVoice(); // she hears it straight away
+  }
+
+  
+
+
+
+
+
+
+
+  
   // Asks the server for ONE slide. Returns the error message, or null if it worked.
   // Used by the main loop AND by Retry / Rewrite buttons.
   async function writeSlide(slide, list) {
@@ -137,17 +173,29 @@ export default function App() {
       </form>
 
       {/* only show the legend and Play all once at least one slide is written */}
-      {written > 0 && (
+        {written > 0 && (
         <div className="toolbar">
           <p className="legend">
             Highlighted = stress it. Bold = more energy. Italic = slow down. A blue line = pause.
           </p>
+
+          {/* ---- 2d: paste here ---- */}
+          <label className="voice-pick">
+            Voice
+            <select value={voiceName} onChange={(e) => chooseVoice(e.target.value)}>
+              <option value="">Automatic</option>
+              {voices.map((v) => (
+                <option key={v.name} value={v.name}>{v.name}</option>
+              ))}
+            </select>
+          </label>
+
           <button className="btn ghost" onClick={playing ? stop : playAll}>
             {playing ? "■ Stop" : "▶ Play all"}
           </button>
-         <button className="btn ghost" onClick={printAsPdf}>
-  Download PDF
-</button>
+          <button className="btn ghost" onClick={printAsPdf}>
+            Download PDF
+          </button>
         </div>
       )}
 
